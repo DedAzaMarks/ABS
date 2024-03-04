@@ -57,9 +57,9 @@ func NewServer() (*Server, error) {
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 	db, err := sql.Open("postgres", dataSource)
-	defer func() { _ = db.Close() }()
 	if err != nil {
 		return nil, fmt.Errorf("can't open DB connection: %w", err)
 	}
+	defer func() { _ = db.Close() }()
 	return &Server{db: db}, nil
 }
