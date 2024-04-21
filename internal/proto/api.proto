@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "internal/proto";
+
+service Client {
+  rpc Ping (init) returns (stream ping) {}
+}
+
+message init {}
+message ping {}
