@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"strconv"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -35,8 +34,7 @@ var homeKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 type state = int
 
 const (
-	EMPTY   state = iota
-	CONNECT       = iota
+	EMPTY state = iota
 )
 
 type TGUser struct {
@@ -57,7 +55,7 @@ func main() {
 		log.Fatalf("error on reading .env file: %v", err)
 	}
 
-	socket, err := net.Listen("tcp", os.Getenv("CLIENT_SERVER_HOST")+":"+os.Getenv("CLIENT_SERVER_PORT"))
+	socket, err := net.Listen("tcp", ":"+os.Getenv("CLIENT_SERVER_PORT"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -86,80 +84,13 @@ func main() {
 
 	// Loop through each update.
 	for update := range updates {
-		// Check if we've gotten a message update.
-		if update.Message != nil {
-			botServer.mu.Lock()
-			if _, ok := botServer.users[update.Message.From.ID]; !ok {
-				botServer.users[update.Message.From.ID] = &TGUser{}
-			}
-			botServer.mu.Unlock()
-
-			botServer.mu.Lock()
-			if botServer.users[update.Message.From.ID].state == CONNECT {
-				ip, err := net.ResolveTCPAddr("tcp", update.Message.Text)
-				if err != nil {
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "error on parsing address")
-					if _, err := bot.Send(msg); err != nil {
-						log.Println(err)
-						botServer.mu.Unlock()
-						continue
-					}
-				}
-				botServer.users[update.Message.From.ID].deviceHost = string(ip.IP)
-				botServer.users[update.Message.From.ID].devicePort = strconv.Itoa(ip.Port)
-				botServer.users[update.Message.From.ID].state = EMPTY
-				botServer.mu.Unlock()
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, string(ip.IP)+":"+strconv.Itoa(ip.Port)+" saved")
-				if _, err := bot.Send(msg); err != nil {
-					log.Println(err)
-				}
-				continue
-			} else if !update.Message.IsCommand() {
-				botServer.mu.Unlock()
-				continue
-			}
-			botServer.mu.Unlock()
-			// Construct a new message from the given chat ID and containing
-			// the text that we received.
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "select action")
-			msg.ReplyToMessageID = update.Message.MessageID
-			switch update.Message.Command() {
-			case open:
-				msg.Text = "select action"
-				msg.ReplyMarkup = homeKeyboard
-			case close_:
-				msg.Text = "close keyboard"
-				msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
-			case abort:
-				botServer.mu.Lock()
-				botServer.users[update.Message.From.ID].state = EMPTY
-				botServer.mu.Unlock()
-				msg.Text = "action was aborted"
-			case help:
-				msg.Text = "Supported commands are: /open , /close , /help"
-			}
-			// Send the message.
-			if _, err = bot.Send(msg); err != nil {
-				log.Println(err)
-			}
-		} else if update.CallbackQuery != nil {
+		if update.CallbackQuery != nil {
 
 			botServer.mu.Lock()
 			if _, ok := botServer.users[update.CallbackQuery.From.ID]; !ok {
 				botServer.users[update.CallbackQuery.From.ID] = &TGUser{}
 			}
 			botServer.mu.Unlock()
-
-			botServer.mu.RLock()
-			if botServer.users[update.CallbackQuery.From.ID].state == CONNECT {
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "input host:port of your client device\nor use /abort to cancel")
-				if _, err := bot.Send(msg); err != nil {
-					log.Println(err)
-				}
-				botServer.mu.RUnlock()
-				continue
-			}
-			botServer.mu.RUnlock()
 
 			callback := tgbotapi.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)
 			if _, err := bot.Request(callback); err != nil {
@@ -168,32 +99,12 @@ func main() {
 
 			switch data := update.CallbackQuery.Data; data {
 			case connect:
-				botServer.mu.Lock()
-				botServer.users[update.CallbackQuery.Message.Chat.ID].state = CONNECT
-				botServer.mu.Unlock()
-				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "input host and port of your client device\nor use /abort to cancel")
+				msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "deprecated or preprecated")
 				if _, err := bot.Send(msg); err != nil {
 					log.Println(err)
 				}
 			case ping:
-				botServer.mu.RLock()
-				host := botServer.users[update.CallbackQuery.From.ID].deviceHost
-				port := botServer.users[update.CallbackQuery.From.ID].devicePort
-				botServer.mu.RUnlock()
-				if host == "" || port == "" {
-					log.Println("host or port are empty")
-					msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, "host or port are empty")
-					if _, err := bot.Send(msg); err != nil {
-						log.Println(err)
-					}
-					continue
-				}
-				if host == "" {
-					host = "localhost"
-				}
 				server.DoPing <- struct{}{}
-				log.Printf("ping %s:%s", host, port)
-
 			}
 		}
 	}
