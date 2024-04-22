@@ -26,7 +26,6 @@ const (
 
 var homeKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(connect, connect),
 		tgbotapi.NewInlineKeyboardButtonData(ping, ping),
 	),
 )
@@ -84,8 +83,22 @@ func main() {
 
 	// Loop through each update.
 	for update := range updates {
-		if update.CallbackQuery != nil {
-
+		if update.Message == nil {
+			if !update.Message.IsCommand() {
+				// TODO - handle input later
+				continue
+			}
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "select action")
+			msg.ReplyToMessageID = update.Message.MessageID
+			switch update.Message.Command() {
+			case open:
+				msg.Text = "TbKHu ping"
+				msg.ReplyMarkup = homeKeyboard
+			case close_:
+				msg.Text = "close keyboard"
+				msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			}
+		} else if update.CallbackQuery != nil {
 			botServer.mu.Lock()
 			if _, ok := botServer.users[update.CallbackQuery.From.ID]; !ok {
 				botServer.users[update.CallbackQuery.From.ID] = &TGUser{}
