@@ -1,8 +1,9 @@
 package client
 
 import (
-	pb "github.com/DedAzaMarks/ABS/internal/proto"
 	"log"
+
+	pb "github.com/DedAzaMarks/ABS/internal/proto"
 )
 
 const pong = "pong"

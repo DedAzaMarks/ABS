@@ -6,22 +6,20 @@ import (
 	"github.com/google/uuid"
 )
 
-type Postgres struct {
+type _ struct {
 	db *sql.DB
 }
 
-func (p *Postgres) GetById(uuid.UUID) {
+func (p *_) GetById(uuid.UUID) {
 
 }
 
-func (p *Postgres) GetAll() {
+func (p *_) GetAll() {
 
 }
 
-func (p *Postgres) Insert() {
-
+func (p *_) Insert() {
 }
-
-func (p *Postgres) Delete() {
+func (p *_) Delete() {
 
 }

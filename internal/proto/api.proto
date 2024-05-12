@@ -10,3 +10,8 @@ service Client {
 
 message init {}
 message ping {}
+
+message RegisterNewClient {
+  string userID = 1;
+  string clientID = 2;
+}
