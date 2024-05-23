@@ -114,7 +114,10 @@ func handleMessage(ctx *context.Context, cancel *context.CancelFunc, msg string)
 			log.Print(err)
 		}
 		*ctx, *cancel = context.WithCancel(context.Background())
-		go torrentDownload(ctx, action.Start.Href)
+		go func() {
+			torrentDownload(ctx, action.Start.Href)
+			*ctx, *cancel = nil, nil
+		}()
 	case *pb.ServerToClientChannelMessage_Stop:
 		if *ctx == nil && *cancel == nil {
 			log.Print("Ничего не загружается")
