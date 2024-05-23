@@ -1,6 +1,7 @@
 package parser
 
 import (
+	myerrors "github.com/DedAzaMarks/ABS/internal/domain/errors"
 	"github.com/DedAzaMarks/ABS/internal/server/scraper/parser/utils"
 	"golang.org/x/net/html"
 	"io"
@@ -14,6 +15,7 @@ func traverseTable(node *html.Node) *html.Node {
 			return node
 		}
 	}
+	log.Print(node.Data)
 	for c := node.FirstChild; c != nil; c = c.NextSibling {
 		if tbl := traverseTable(c); tbl != nil {
 			return tbl
@@ -94,7 +96,12 @@ func ParseFilm(r io.Reader) ([]FilmResult, error) {
 		return nil, err
 	}
 
-	table := traverseTable(node).LastChild // ignore table header
-	res := traverseLines(table)
+	table := traverseTable(node)
+	if table == nil {
+		return nil, myerrors.NotAFilm
+	}
+	print()
+	tableBody := table.LastChild // ignore table header
+	res := traverseLines(tableBody)
 	return res, nil
 }

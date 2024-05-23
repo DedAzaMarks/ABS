@@ -111,8 +111,8 @@ func (s *Server) Start() {
 					s.users[userID] = domain.NewTGUser(userID)
 					msg := tgbotapi.NewMessage(userID_, fmt.Sprintf(
 						`Для начала поиска нажмите на кнопку %q
-Для того, чтобы узнать свой ID  нажмите на кнопку %s. Используйте его на устройстве, куда будут скачиваться фильмы.
-Для отмены поиска/выбора фильма нажмите кнопку %s
+Для того, чтобы узнать свой ID  нажмите на кнопку %q. Используйте его на устройстве, куда будут скачиваться фильмы.
+Для отмены поиска/выбора фильма нажмите кнопку %q
 `, NewSearch, ID, Cancel))
 					msg.ReplyMarkup = mainKeyboard
 					if _, err := s.bot.Send(msg); err != nil {
@@ -204,6 +204,13 @@ func (s *Server) Start() {
 						log.Print(cmd.Err())
 					}
 				}()
+				continue
+			} else {
+				log.Print("call back on wrong state")
+				msg := tgbotapi.NewMessage(userID_, fmt.Sprintf("Для поиска фильма нажмите %q", NewSearch))
+				if _, err := s.bot.Send(msg); err != nil {
+					log.Print(err)
+				}
 				continue
 			}
 		}
@@ -305,7 +312,10 @@ func (s *Server) GetFilmLinks(callbackQuery *tgbotapi.CallbackQuery, user *domai
 	})
 	if indx == -1 {
 		log.Printf("film with id %s not found in users(%d) search results: %v", searchResultID, userID, user.SearchResults)
-		if _, err := s.bot.Send(tgbotapi.NewMessage(userID, "Неизвестная версия фильма. Выберите версию из текущей подборки.")); err != nil {
+		if _, err := s.bot.Send(tgbotapi.NewMessage(userID, fmt.Sprintf(
+			"Выбран неизвестный фильм. Выберите фильм из текущей подборки. Если же вы хотите выбрать другой фильм нажмите %q",
+			NewSearch,
+		))); err != nil {
 			log.Print(err)
 		}
 		return
@@ -314,6 +324,9 @@ func (s *Server) GetFilmLinks(callbackQuery *tgbotapi.CallbackQuery, user *domai
 	filmResults, err := scraper.Film(requestUrl)
 	if err != nil {
 		log.Print(err)
+		if _, err := s.bot.Send(tgbotapi.NewMessage(userID, "Не получилось найти фильм с таким названием. Возможно это сериал или игра. Сейчас для скачивания доступны только фильмы.")); err != nil {
+			log.Print(err)
+		}
 		return
 	}
 	for _, filmResult := range filmResults {
@@ -399,7 +412,10 @@ func (s *Server) SelectFilmVersion(query *tgbotapi.CallbackQuery, user *domain.T
 	})
 	if indx == -1 {
 		log.Printf("version with id %s not found in users(%d) versions: %v", versionID, userID, user.FilmResults)
-		if _, err := s.bot.Send(tgbotapi.NewMessage(userID, "Неизвестная версия фильма. Выберите версию из текущей подборки.")); err != nil {
+		if _, err := s.bot.Send(tgbotapi.NewMessage(userID, fmt.Sprintf(
+			"Неизвестная версия фильма. Выберите версию из текущей подборки. Если же вы хотите выбрать другой фильм нажмите %q",
+			NewSearch,
+		))); err != nil {
 			log.Print(err)
 		}
 		return
@@ -415,12 +431,13 @@ func (s *Server) SelectFilmVersion(query *tgbotapi.CallbackQuery, user *domain.T
 			log.Print(err)
 		}
 	}
-	if _, err := s.bot.Send(tgbotapi.NewMessage(userID, fmt.Sprintf("%s %s %s %s %s",
+	if _, err := s.bot.Send(tgbotapi.NewMessage(userID, fmt.Sprintf("Фильм с выбранными характеристиками (%s %s %s %s %s) будет скачан на устройство, которое вы привязали. Чтобы скачать новый фильм или выбрать другую версию нажмите на кнопку %q",
 		filmResult.Quality,
 		filmResult.TranslationVoiceover,
 		filmResult.Author,
 		filmResult.FileFormat,
 		filmResult.Size,
+		NewSearch,
 	))); err != nil {
 		log.Print(err)
 	}

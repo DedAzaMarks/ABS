@@ -23,12 +23,12 @@ func Search(url string) ([]parser.SearchResult, error) {
 func Film(url string) ([]parser.FilmResult, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("list: %w", err)
+		return nil, fmt.Errorf("film: %w", err)
 	}
 	defer func(Body io.ReadCloser) { _ = Body.Close() }(resp.Body)
 	res, err := parser.ParseFilm(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("parse list: %w", err)
+		return nil, fmt.Errorf("parse film: %w", err)
 	}
 	return res, nil
 }

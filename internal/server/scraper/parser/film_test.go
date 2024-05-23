@@ -22,3 +22,16 @@ func TestParseFilm(t *testing.T) {
 	require.NoError(t, err)
 	log.Println(prettyJSON.String())
 }
+
+//go:embed "test/Скачать сериал Катастрофа 2017 через торрент в хорошем качестве бесплатно.html"
+var catastophe []byte
+
+func TestParseFilmCatastrophe(t *testing.T) {
+	buf := bytes.NewReader(catastophe)
+	filmVariants, err := ParseFilm(io.NopCloser(buf))
+	jsn, _ := json.Marshal(filmVariants)
+	var prettyJSON bytes.Buffer
+	require.NoError(t, json.Indent(&prettyJSON, jsn, "", " "))
+	require.NoError(t, err)
+	log.Println(prettyJSON.String())
+}
