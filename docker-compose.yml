@@ -1,28 +1,49 @@
 services:
   server:
-    container_name: server
     build:
       context: .
       dockerfile: ./server.Dockerfile
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
     ports:
       - "42069:42069"
     depends_on:
       - redis
+      - postgres
     networks:
-      - app-network
+      - msg-network
+      - db-network
 
   redis:
     image: redis:7.2-alpine
     ports:
       - "6379:6379"
     networks:
-      - app-network
+      - msg-network
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
 
 networks:
-  app-network:
-    driver: bridge
+  msg-network:
+  db-network:
 
 volumes:
   redis_data:
+  postgres_data:
+

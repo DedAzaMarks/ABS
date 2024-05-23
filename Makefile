@@ -2,16 +2,19 @@ build:
 	go build -o /bin/server ./cmd/tg_bot/main.go
 
 run: build
-	@./bin/server
+	@/bin/server
 
 test:
 	go test -v ./...
 
-image:
-	docker build -t myserver .
+#image:
+#	docker build -t server .
 
-compose-up: image
-	docker-compose -f ./docker-compose.yml up -d
+compose-build:
+	docker-compose -f ./docker-compose.yml build
 
-compose-down:
+up: compose-build
+	docker-compose -f ./docker-compose.yml up
+
+down:
 	docker-compose -f docker-compose.yml down -v

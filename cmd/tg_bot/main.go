@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
+	"github.com/DedAzaMarks/ABS/internal/server/storage"
 	"log"
 	"os"
 
 	"github.com/DedAzaMarks/ABS/internal/server"
-	"github.com/DedAzaMarks/ABS/internal/storage"
 	"github.com/go-redis/redis/v8"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
@@ -14,6 +15,7 @@ import (
 func main() {
 	log.SetPrefix("tg_bot: ")
 	log.SetFlags(log.Lshortfile)
+
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("error on reading .env file: %v", err)
 	}
@@ -24,12 +26,16 @@ func main() {
 	}
 	bot.Debug = true
 
-	db, _ := storage.GetRepo("inmemory")
+	ctx := context.Background()
+	db, _ := storage.GetRepo(ctx, storage.InMemory)
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_ADDR"),
+		Addr:     "localhost:6379",
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Fatal(err)
+	}
 	s := server.NewServer(db, bot, redisClient)
 	s.Start()
 }
