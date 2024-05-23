@@ -4,14 +4,35 @@ package proto;
 
 option go_package = "internal/proto";
 
-service Client {
-  rpc Ping (init) returns (stream ping) {}
-}
-
-message init {}
-message ping {}
-
 message RegisterNewClient {
   string userID = 1;
   string clientID = 2;
+}
+
+message ClientToServerChannelMessage {
+  message DownloadStarted {
+    string downloadID = 1;
+  }
+  message CurrentDownloads {
+    repeated string downloadIDs = 1;
+  }
+  oneof Report {
+    DownloadStarted downloadStarted = 1;
+    CurrentDownloads downloads = 2;
+  }
+}
+
+message ServerToClientChannelMessage {
+  message StartDownload {
+    string href = 1;
+  }
+  message StopDownload {
+    string downloadID = 1;
+  }
+  message ListDownloads {}
+  oneof Action {
+    StartDownload start = 1;
+    StopDownload stop = 2;
+    ListDownloads list = 3;
+  }
 }

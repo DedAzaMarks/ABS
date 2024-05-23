@@ -6,6 +6,11 @@ import (
 	"flag"
 	"fmt"
 	pb "github.com/DedAzaMarks/ABS/internal/proto"
+	"github.com/gen2brain/beeep"
+	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
+	"github.com/martinlindhe/inputbox"
+	"google.golang.org/protobuf/proto"
 	"log"
 	"os"
 	"os/exec"
@@ -13,12 +18,6 @@ import (
 	"strconv"
 	"syscall"
 	"time"
-
-	"github.com/gen2brain/beeep"
-	"github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
-	"github.com/martinlindhe/inputbox"
-	"google.golang.org/protobuf/proto"
 )
 
 var ClientID = uuid.New()
@@ -84,59 +83,107 @@ func main() {
 			}
 		}
 	}()
+	var ctxDownload context.Context
+	var cancelDownload context.CancelFunc
 	for {
 		select {
 		default:
 			log.Print("listening for messages")
-			msg, err := pubSub.ReceiveMessage(ctx)
+			msg, err := pubSub.ReceiveMessage(ctxDownload)
 			if err != nil {
 				log.Print("Error receiving message: ", err)
 				continue
 			}
 			log.Print("received message")
-			if err := beeep.Alert("Remote Download Client", msg.Payload, ""); err != nil {
-				log.Fatal(err)
-			}
-			cmd := exec.Command(
-				`transmission-cli`,
-				msg.Payload,
-				`-w`, `/tmp`,
-				`-f`, `/tmp/download_finished.sh`)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			if err := cmd.Start(); err != nil {
-				log.Print(err)
-			}
-			// Создаем канал для приема сигналов
-			sigChan := make(chan os.Signal, 1)
-
-			// Определяем, какие сигналы будем обрабатывать
-			signal.Notify(sigChan, syscall.SIGUSR1)
-
-			ticker := time.NewTicker(30 * time.Second)
-			defer ticker.Stop()
-
-			// Блокируем основной поток до тех пор, пока не получим сигнал
-
-		loop:
-			for {
-				select {
-				case sig := <-sigChan:
-					switch sig {
-					case syscall.SIGUSR1:
-						fmt.Println("SIGUSR1 пойман за руку как дешевка!")
-						if err := cmd.Process.Kill(); err != nil {
-							log.Println(err)
-						}
-					}
-					break loop
-				case <-ticker.C:
-					log.Print("идет загрузка...")
-				}
-			}
-
-			// Здесь можно выполнить любую необходимую очистку
-			fmt.Println("Загрузка завершена!")
+			handleMessage(&ctxDownload, &cancelDownload, msg.Payload)
 		}
 	}
+}
+
+func handleMessage(ctx *context.Context, cancel *context.CancelFunc, msg string) {
+	message := pb.ServerToClientChannelMessage{}
+	err := proto.Unmarshal([]byte(msg), &message)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	switch action := message.Action.(type) {
+	case *pb.ServerToClientChannelMessage_Start:
+		if err := beeep.Alert("Remote Download Client", "Новая загрузка", ""); err != nil {
+			_ = beeep.Alert("Remote Download Client", "Alert error", "")
+			log.Print(err)
+		}
+		*ctx, *cancel = context.WithCancel(context.Background())
+		go torrentDownload(ctx, action.Start.Href)
+	case *pb.ServerToClientChannelMessage_Stop:
+		if *ctx == nil && *cancel == nil {
+			log.Print("Ничего не загружается")
+			if err := beeep.Alert("Remote Download Client", "Ничего не загружается", ""); err != nil {
+				_ = beeep.Alert("Remote Download Client", "Alert error", "")
+				log.Print(err)
+			}
+			return
+		}
+		log.Print("stopping torrent")
+		if err := beeep.Alert("Remote Download Client", "Отмена загрузки", ""); err != nil {
+			_ = beeep.Alert("Remote Download Client", "Alert error", "")
+			log.Print(err)
+		}
+		(*cancel)()
+		log.Print("torrent stopped")
+		*ctx, *cancel = nil, nil
+	case *pb.ServerToClientChannelMessage_List:
+	default:
+		log.Print("unknown action")
+		return
+	}
+}
+
+func torrentDownload(ctx *context.Context, magnet string) {
+	cmd := exec.Command(
+		`transmission-cli`,
+		magnet,
+		`-w`, `/tmp`,
+		`-f`, `/tmp/download_finished.sh`)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
+		log.Print(err)
+	}
+	// Создаем канал для приема сигналов
+	sigChan := make(chan os.Signal, 1)
+
+	// Определяем, какие сигналы будем обрабатывать
+	signal.Notify(sigChan, syscall.SIGUSR1)
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	// Блокируем основной поток до тех пор, пока не получим сигнал
+loop:
+	for {
+		select {
+		case sig := <-sigChan:
+			switch sig {
+			case syscall.SIGUSR1:
+				fmt.Println("SIGUSR1 пойман за руку как дешевка!")
+				if err := cmd.Process.Kill(); err != nil {
+					log.Println(err)
+				}
+			}
+			break loop
+		case <-(*ctx).Done():
+			fmt.Println("Загрузка прервана!")
+			if err := cmd.Process.Kill(); err != nil {
+				log.Println(err)
+			}
+			break loop
+		case <-ticker.C:
+
+			log.Print("идет загрузка...")
+		}
+	}
+
+	// Здесь можно выполнить любую необходимую очистку
+	fmt.Println("Загрузка завершена!")
 }

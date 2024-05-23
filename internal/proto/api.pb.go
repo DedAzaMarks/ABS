@@ -7,11 +7,10 @@
 package proto
 
 import (
-	reflect "reflect"
-	sync "sync"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
 )
 
 const (
@@ -20,82 +19,6 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
-
-type Init struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *Init) Reset() {
-	*x = Init{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_api_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Init) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Init) ProtoMessage() {}
-
-func (x *Init) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_api_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Init.ProtoReflect.Descriptor instead.
-func (*Init) Descriptor() ([]byte, []int) {
-	return file_internal_proto_api_proto_rawDescGZIP(), []int{0}
-}
-
-type Ping struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *Ping) Reset() {
-	*x = Ping{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_api_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Ping) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Ping) ProtoMessage() {}
-
-func (x *Ping) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_api_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Ping.ProtoReflect.Descriptor instead.
-func (*Ping) Descriptor() ([]byte, []int) {
-	return file_internal_proto_api_proto_rawDescGZIP(), []int{1}
-}
 
 type RegisterNewClient struct {
 	state         protoimpl.MessageState
@@ -109,7 +32,7 @@ type RegisterNewClient struct {
 func (x *RegisterNewClient) Reset() {
 	*x = RegisterNewClient{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_api_proto_msgTypes[2]
+		mi := &file_internal_proto_api_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -122,7 +45,7 @@ func (x *RegisterNewClient) String() string {
 func (*RegisterNewClient) ProtoMessage() {}
 
 func (x *RegisterNewClient) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_api_proto_msgTypes[2]
+	mi := &file_internal_proto_api_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -135,7 +58,7 @@ func (x *RegisterNewClient) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterNewClient.ProtoReflect.Descriptor instead.
 func (*RegisterNewClient) Descriptor() ([]byte, []int) {
-	return file_internal_proto_api_proto_rawDescGZIP(), []int{2}
+	return file_internal_proto_api_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *RegisterNewClient) GetUserID() string {
@@ -152,22 +75,463 @@ func (x *RegisterNewClient) GetClientID() string {
 	return ""
 }
 
+type ClientToServerChannelMessage struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Report:
+	//
+	//	*ClientToServerChannelMessage_DownloadStarted_
+	//	*ClientToServerChannelMessage_Downloads
+	Report isClientToServerChannelMessage_Report `protobuf_oneof:"Report"`
+}
+
+func (x *ClientToServerChannelMessage) Reset() {
+	*x = ClientToServerChannelMessage{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_api_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ClientToServerChannelMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientToServerChannelMessage) ProtoMessage() {}
+
+func (x *ClientToServerChannelMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_api_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientToServerChannelMessage.ProtoReflect.Descriptor instead.
+func (*ClientToServerChannelMessage) Descriptor() ([]byte, []int) {
+	return file_internal_proto_api_proto_rawDescGZIP(), []int{1}
+}
+
+func (m *ClientToServerChannelMessage) GetReport() isClientToServerChannelMessage_Report {
+	if m != nil {
+		return m.Report
+	}
+	return nil
+}
+
+func (x *ClientToServerChannelMessage) GetDownloadStarted() *ClientToServerChannelMessage_DownloadStarted {
+	if x, ok := x.GetReport().(*ClientToServerChannelMessage_DownloadStarted_); ok {
+		return x.DownloadStarted
+	}
+	return nil
+}
+
+func (x *ClientToServerChannelMessage) GetDownloads() *ClientToServerChannelMessage_CurrentDownloads {
+	if x, ok := x.GetReport().(*ClientToServerChannelMessage_Downloads); ok {
+		return x.Downloads
+	}
+	return nil
+}
+
+type isClientToServerChannelMessage_Report interface {
+	isClientToServerChannelMessage_Report()
+}
+
+type ClientToServerChannelMessage_DownloadStarted_ struct {
+	DownloadStarted *ClientToServerChannelMessage_DownloadStarted `protobuf:"bytes,1,opt,name=downloadStarted,proto3,oneof"`
+}
+
+type ClientToServerChannelMessage_Downloads struct {
+	Downloads *ClientToServerChannelMessage_CurrentDownloads `protobuf:"bytes,2,opt,name=downloads,proto3,oneof"`
+}
+
+func (*ClientToServerChannelMessage_DownloadStarted_) isClientToServerChannelMessage_Report() {}
+
+func (*ClientToServerChannelMessage_Downloads) isClientToServerChannelMessage_Report() {}
+
+type ServerToClientChannelMessage struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Types that are assignable to Action:
+	//
+	//	*ServerToClientChannelMessage_Start
+	//	*ServerToClientChannelMessage_Stop
+	//	*ServerToClientChannelMessage_List
+	Action isServerToClientChannelMessage_Action `protobuf_oneof:"Action"`
+}
+
+func (x *ServerToClientChannelMessage) Reset() {
+	*x = ServerToClientChannelMessage{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_api_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ServerToClientChannelMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerToClientChannelMessage) ProtoMessage() {}
+
+func (x *ServerToClientChannelMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_api_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerToClientChannelMessage.ProtoReflect.Descriptor instead.
+func (*ServerToClientChannelMessage) Descriptor() ([]byte, []int) {
+	return file_internal_proto_api_proto_rawDescGZIP(), []int{2}
+}
+
+func (m *ServerToClientChannelMessage) GetAction() isServerToClientChannelMessage_Action {
+	if m != nil {
+		return m.Action
+	}
+	return nil
+}
+
+func (x *ServerToClientChannelMessage) GetStart() *ServerToClientChannelMessage_StartDownload {
+	if x, ok := x.GetAction().(*ServerToClientChannelMessage_Start); ok {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *ServerToClientChannelMessage) GetStop() *ServerToClientChannelMessage_StopDownload {
+	if x, ok := x.GetAction().(*ServerToClientChannelMessage_Stop); ok {
+		return x.Stop
+	}
+	return nil
+}
+
+func (x *ServerToClientChannelMessage) GetList() *ServerToClientChannelMessage_ListDownloads {
+	if x, ok := x.GetAction().(*ServerToClientChannelMessage_List); ok {
+		return x.List
+	}
+	return nil
+}
+
+type isServerToClientChannelMessage_Action interface {
+	isServerToClientChannelMessage_Action()
+}
+
+type ServerToClientChannelMessage_Start struct {
+	Start *ServerToClientChannelMessage_StartDownload `protobuf:"bytes,1,opt,name=start,proto3,oneof"`
+}
+
+type ServerToClientChannelMessage_Stop struct {
+	Stop *ServerToClientChannelMessage_StopDownload `protobuf:"bytes,2,opt,name=stop,proto3,oneof"`
+}
+
+type ServerToClientChannelMessage_List struct {
+	List *ServerToClientChannelMessage_ListDownloads `protobuf:"bytes,3,opt,name=list,proto3,oneof"`
+}
+
+func (*ServerToClientChannelMessage_Start) isServerToClientChannelMessage_Action() {}
+
+func (*ServerToClientChannelMessage_Stop) isServerToClientChannelMessage_Action() {}
+
+func (*ServerToClientChannelMessage_List) isServerToClientChannelMessage_Action() {}
+
+type ClientToServerChannelMessage_DownloadStarted struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	DownloadID string `protobuf:"bytes,1,opt,name=downloadID,proto3" json:"downloadID,omitempty"`
+}
+
+func (x *ClientToServerChannelMessage_DownloadStarted) Reset() {
+	*x = ClientToServerChannelMessage_DownloadStarted{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_api_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ClientToServerChannelMessage_DownloadStarted) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientToServerChannelMessage_DownloadStarted) ProtoMessage() {}
+
+func (x *ClientToServerChannelMessage_DownloadStarted) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_api_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientToServerChannelMessage_DownloadStarted.ProtoReflect.Descriptor instead.
+func (*ClientToServerChannelMessage_DownloadStarted) Descriptor() ([]byte, []int) {
+	return file_internal_proto_api_proto_rawDescGZIP(), []int{1, 0}
+}
+
+func (x *ClientToServerChannelMessage_DownloadStarted) GetDownloadID() string {
+	if x != nil {
+		return x.DownloadID
+	}
+	return ""
+}
+
+type ClientToServerChannelMessage_CurrentDownloads struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	DownloadIDs []string `protobuf:"bytes,1,rep,name=downloadIDs,proto3" json:"downloadIDs,omitempty"`
+}
+
+func (x *ClientToServerChannelMessage_CurrentDownloads) Reset() {
+	*x = ClientToServerChannelMessage_CurrentDownloads{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_api_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ClientToServerChannelMessage_CurrentDownloads) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientToServerChannelMessage_CurrentDownloads) ProtoMessage() {}
+
+func (x *ClientToServerChannelMessage_CurrentDownloads) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_api_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientToServerChannelMessage_CurrentDownloads.ProtoReflect.Descriptor instead.
+func (*ClientToServerChannelMessage_CurrentDownloads) Descriptor() ([]byte, []int) {
+	return file_internal_proto_api_proto_rawDescGZIP(), []int{1, 1}
+}
+
+func (x *ClientToServerChannelMessage_CurrentDownloads) GetDownloadIDs() []string {
+	if x != nil {
+		return x.DownloadIDs
+	}
+	return nil
+}
+
+type ServerToClientChannelMessage_StartDownload struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Href string `protobuf:"bytes,1,opt,name=href,proto3" json:"href,omitempty"`
+}
+
+func (x *ServerToClientChannelMessage_StartDownload) Reset() {
+	*x = ServerToClientChannelMessage_StartDownload{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_api_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ServerToClientChannelMessage_StartDownload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerToClientChannelMessage_StartDownload) ProtoMessage() {}
+
+func (x *ServerToClientChannelMessage_StartDownload) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_api_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerToClientChannelMessage_StartDownload.ProtoReflect.Descriptor instead.
+func (*ServerToClientChannelMessage_StartDownload) Descriptor() ([]byte, []int) {
+	return file_internal_proto_api_proto_rawDescGZIP(), []int{2, 0}
+}
+
+func (x *ServerToClientChannelMessage_StartDownload) GetHref() string {
+	if x != nil {
+		return x.Href
+	}
+	return ""
+}
+
+type ServerToClientChannelMessage_StopDownload struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	DownloadID string `protobuf:"bytes,1,opt,name=downloadID,proto3" json:"downloadID,omitempty"`
+}
+
+func (x *ServerToClientChannelMessage_StopDownload) Reset() {
+	*x = ServerToClientChannelMessage_StopDownload{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_api_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ServerToClientChannelMessage_StopDownload) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerToClientChannelMessage_StopDownload) ProtoMessage() {}
+
+func (x *ServerToClientChannelMessage_StopDownload) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_api_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerToClientChannelMessage_StopDownload.ProtoReflect.Descriptor instead.
+func (*ServerToClientChannelMessage_StopDownload) Descriptor() ([]byte, []int) {
+	return file_internal_proto_api_proto_rawDescGZIP(), []int{2, 1}
+}
+
+func (x *ServerToClientChannelMessage_StopDownload) GetDownloadID() string {
+	if x != nil {
+		return x.DownloadID
+	}
+	return ""
+}
+
+type ServerToClientChannelMessage_ListDownloads struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *ServerToClientChannelMessage_ListDownloads) Reset() {
+	*x = ServerToClientChannelMessage_ListDownloads{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_internal_proto_api_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ServerToClientChannelMessage_ListDownloads) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServerToClientChannelMessage_ListDownloads) ProtoMessage() {}
+
+func (x *ServerToClientChannelMessage_ListDownloads) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_api_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServerToClientChannelMessage_ListDownloads.ProtoReflect.Descriptor instead.
+func (*ServerToClientChannelMessage_ListDownloads) Descriptor() ([]byte, []int) {
+	return file_internal_proto_api_proto_rawDescGZIP(), []int{2, 2}
+}
+
 var File_internal_proto_api_proto protoreflect.FileDescriptor
 
 var file_internal_proto_api_proto_rawDesc = []byte{
 	0x0a, 0x18, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x2f, 0x61, 0x70, 0x69, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x05, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x22, 0x06, 0x0a, 0x04, 0x69, 0x6e, 0x69, 0x74, 0x22, 0x06, 0x0a, 0x04, 0x70, 0x69, 0x6e,
-	0x67, 0x22, 0x47, 0x0a, 0x11, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x4e, 0x65, 0x77,
+	0x6f, 0x22, 0x47, 0x0a, 0x11, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x4e, 0x65, 0x77,
 	0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x44,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x44, 0x12, 0x1a,
 	0x0a, 0x08, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x49, 0x44, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x08, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x49, 0x44, 0x32, 0x2e, 0x0a, 0x06, 0x43, 0x6c,
-	0x69, 0x65, 0x6e, 0x74, 0x12, 0x24, 0x0a, 0x04, 0x50, 0x69, 0x6e, 0x67, 0x12, 0x0b, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x69, 0x6e, 0x69, 0x74, 0x1a, 0x0b, 0x2e, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2e, 0x70, 0x69, 0x6e, 0x67, 0x22, 0x00, 0x30, 0x01, 0x42, 0x10, 0x5a, 0x0e, 0x69, 0x6e,
-	0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x08, 0x63, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x49, 0x44, 0x22, 0xc8, 0x02, 0x0a, 0x1c, 0x43,
+	0x6c, 0x69, 0x65, 0x6e, 0x74, 0x54, 0x6f, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x43, 0x68, 0x61,
+	0x6e, 0x6e, 0x65, 0x6c, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x5f, 0x0a, 0x0f, 0x64,
+	0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x61, 0x72, 0x74, 0x65, 0x64, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x33, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x43, 0x6c, 0x69,
+	0x65, 0x6e, 0x74, 0x54, 0x6f, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x43, 0x68, 0x61, 0x6e, 0x6e,
+	0x65, 0x6c, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x2e, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f,
+	0x61, 0x64, 0x53, 0x74, 0x61, 0x72, 0x74, 0x65, 0x64, 0x48, 0x00, 0x52, 0x0f, 0x64, 0x6f, 0x77,
+	0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x61, 0x72, 0x74, 0x65, 0x64, 0x12, 0x54, 0x0a, 0x09,
+	0x64, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x34, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x54, 0x6f,
+	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x43, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x4d, 0x65, 0x73,
+	0x73, 0x61, 0x67, 0x65, 0x2e, 0x43, 0x75, 0x72, 0x72, 0x65, 0x6e, 0x74, 0x44, 0x6f, 0x77, 0x6e,
+	0x6c, 0x6f, 0x61, 0x64, 0x73, 0x48, 0x00, 0x52, 0x09, 0x64, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61,
+	0x64, 0x73, 0x1a, 0x31, 0x0a, 0x0f, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74,
+	0x61, 0x72, 0x74, 0x65, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x64, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61,
+	0x64, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x64, 0x6f, 0x77, 0x6e, 0x6c,
+	0x6f, 0x61, 0x64, 0x49, 0x44, 0x1a, 0x34, 0x0a, 0x10, 0x43, 0x75, 0x72, 0x72, 0x65, 0x6e, 0x74,
+	0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x73, 0x12, 0x20, 0x0a, 0x0b, 0x64, 0x6f, 0x77,
+	0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x49, 0x44, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0b,
+	0x64, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x49, 0x44, 0x73, 0x42, 0x08, 0x0a, 0x06, 0x52,
+	0x65, 0x70, 0x6f, 0x72, 0x74, 0x22, 0xea, 0x02, 0x0a, 0x1c, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72,
+	0x54, 0x6f, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x43, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x4d,
+	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x49, 0x0a, 0x05, 0x73, 0x74, 0x61, 0x72, 0x74, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x31, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x53, 0x65,
+	0x72, 0x76, 0x65, 0x72, 0x54, 0x6f, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x43, 0x68, 0x61, 0x6e,
+	0x6e, 0x65, 0x6c, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x2e, 0x53, 0x74, 0x61, 0x72, 0x74,
+	0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x48, 0x00, 0x52, 0x05, 0x73, 0x74, 0x61, 0x72,
+	0x74, 0x12, 0x46, 0x0a, 0x04, 0x73, 0x74, 0x6f, 0x70, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x30, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x54, 0x6f,
+	0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x43, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x4d, 0x65, 0x73,
+	0x73, 0x61, 0x67, 0x65, 0x2e, 0x53, 0x74, 0x6f, 0x70, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61,
+	0x64, 0x48, 0x00, 0x52, 0x04, 0x73, 0x74, 0x6f, 0x70, 0x12, 0x47, 0x0a, 0x04, 0x6c, 0x69, 0x73,
+	0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x31, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2e,
+	0x53, 0x65, 0x72, 0x76, 0x65, 0x72, 0x54, 0x6f, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x43, 0x68,
+	0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x2e, 0x4c, 0x69, 0x73,
+	0x74, 0x44, 0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x73, 0x48, 0x00, 0x52, 0x04, 0x6c, 0x69,
+	0x73, 0x74, 0x1a, 0x23, 0x0a, 0x0d, 0x53, 0x74, 0x61, 0x72, 0x74, 0x44, 0x6f, 0x77, 0x6e, 0x6c,
+	0x6f, 0x61, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x68, 0x72, 0x65, 0x66, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x04, 0x68, 0x72, 0x65, 0x66, 0x1a, 0x2e, 0x0a, 0x0c, 0x53, 0x74, 0x6f, 0x70, 0x44,
+	0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x64, 0x6f, 0x77, 0x6e, 0x6c,
+	0x6f, 0x61, 0x64, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x64, 0x6f, 0x77,
+	0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x49, 0x44, 0x1a, 0x0f, 0x0a, 0x0d, 0x4c, 0x69, 0x73, 0x74, 0x44,
+	0x6f, 0x77, 0x6e, 0x6c, 0x6f, 0x61, 0x64, 0x73, 0x42, 0x08, 0x0a, 0x06, 0x41, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x42, 0x10, 0x5a, 0x0e, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -182,20 +546,28 @@ func file_internal_proto_api_proto_rawDescGZIP() []byte {
 	return file_internal_proto_api_proto_rawDescData
 }
 
-var file_internal_proto_api_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_internal_proto_api_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_internal_proto_api_proto_goTypes = []interface{}{
-	(*Init)(nil),              // 0: proto.init
-	(*Ping)(nil),              // 1: proto.ping
-	(*RegisterNewClient)(nil), // 2: proto.RegisterNewClient
+	(*RegisterNewClient)(nil),                             // 0: proto.RegisterNewClient
+	(*ClientToServerChannelMessage)(nil),                  // 1: proto.ClientToServerChannelMessage
+	(*ServerToClientChannelMessage)(nil),                  // 2: proto.ServerToClientChannelMessage
+	(*ClientToServerChannelMessage_DownloadStarted)(nil),  // 3: proto.ClientToServerChannelMessage.DownloadStarted
+	(*ClientToServerChannelMessage_CurrentDownloads)(nil), // 4: proto.ClientToServerChannelMessage.CurrentDownloads
+	(*ServerToClientChannelMessage_StartDownload)(nil),    // 5: proto.ServerToClientChannelMessage.StartDownload
+	(*ServerToClientChannelMessage_StopDownload)(nil),     // 6: proto.ServerToClientChannelMessage.StopDownload
+	(*ServerToClientChannelMessage_ListDownloads)(nil),    // 7: proto.ServerToClientChannelMessage.ListDownloads
 }
 var file_internal_proto_api_proto_depIdxs = []int32{
-	0, // 0: proto.Client.Ping:input_type -> proto.init
-	1, // 1: proto.Client.Ping:output_type -> proto.ping
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	3, // 0: proto.ClientToServerChannelMessage.downloadStarted:type_name -> proto.ClientToServerChannelMessage.DownloadStarted
+	4, // 1: proto.ClientToServerChannelMessage.downloads:type_name -> proto.ClientToServerChannelMessage.CurrentDownloads
+	5, // 2: proto.ServerToClientChannelMessage.start:type_name -> proto.ServerToClientChannelMessage.StartDownload
+	6, // 3: proto.ServerToClientChannelMessage.stop:type_name -> proto.ServerToClientChannelMessage.StopDownload
+	7, // 4: proto.ServerToClientChannelMessage.list:type_name -> proto.ServerToClientChannelMessage.ListDownloads
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_internal_proto_api_proto_init() }
@@ -205,30 +577,6 @@ func file_internal_proto_api_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_internal_proto_api_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Init); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_api_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Ping); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_api_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RegisterNewClient); i {
 			case 0:
 				return &v.state
@@ -240,6 +588,99 @@ func file_internal_proto_api_proto_init() {
 				return nil
 			}
 		}
+		file_internal_proto_api_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ClientToServerChannelMessage); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_api_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ServerToClientChannelMessage); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_api_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ClientToServerChannelMessage_DownloadStarted); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_api_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ClientToServerChannelMessage_CurrentDownloads); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_api_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ServerToClientChannelMessage_StartDownload); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_api_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ServerToClientChannelMessage_StopDownload); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_internal_proto_api_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ServerToClientChannelMessage_ListDownloads); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
+	file_internal_proto_api_proto_msgTypes[1].OneofWrappers = []interface{}{
+		(*ClientToServerChannelMessage_DownloadStarted_)(nil),
+		(*ClientToServerChannelMessage_Downloads)(nil),
+	}
+	file_internal_proto_api_proto_msgTypes[2].OneofWrappers = []interface{}{
+		(*ServerToClientChannelMessage_Start)(nil),
+		(*ServerToClientChannelMessage_Stop)(nil),
+		(*ServerToClientChannelMessage_List)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -247,9 +688,9 @@ func file_internal_proto_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_internal_proto_api_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   8,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   0,
 		},
 		GoTypes:           file_internal_proto_api_proto_goTypes,
 		DependencyIndexes: file_internal_proto_api_proto_depIdxs,

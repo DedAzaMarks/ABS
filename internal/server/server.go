@@ -28,14 +28,15 @@ const (
 
 	search = "new search"
 
-	start     = "start"
-	open      = "open"
-	close_    = "close"
-	abort     = "abort"
-	help      = "help"
-	ID        = "ID"
-	NewSearch = "Новый поиск"
-	Cancel    = "Отмена"
+	start          = "start"
+	open           = "open"
+	close_         = "close"
+	abort          = "abort"
+	help           = "help"
+	ID             = "ID"
+	NewSearch      = "Новый поиск"
+	Cancel         = "Отмена"
+	CancelDownload = "Отмена текущей загрузки"
 )
 
 const (
@@ -48,6 +49,7 @@ var mainKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButton(ID),
 		tgbotapi.NewKeyboardButton(NewSearch),
 		tgbotapi.NewKeyboardButton(Cancel),
+		tgbotapi.NewKeyboardButton(CancelDownload),
 	),
 )
 
@@ -164,6 +166,27 @@ func (s *Server) Start() {
 					log.Print(err)
 				}
 				continue
+			case CancelDownload:
+				msg := tgbotapi.NewMessage(userID_, "Если на ваше устройство идет скачивание, оно будет прервано")
+				if _, err := s.bot.Send(msg); err != nil {
+					log.Print(err)
+				}
+				cancelDownloadMessage := pb.ServerToClientChannelMessage{
+					Action: &pb.ServerToClientChannelMessage_Stop{
+						Stop: &pb.ServerToClientChannelMessage_StopDownload{DownloadID: ""}}}
+				pbBuf, err := proto.Marshal(&cancelDownloadMessage)
+				if err != nil {
+					msg := tgbotapi.NewMessage(userID_, "Ошибка при попытке скачать фильм на устройство. Отмена поиска.")
+					if _, err := s.bot.Send(msg); err != nil {
+						log.Print(err)
+					}
+					continue
+				}
+				log.Printf("publish to %s: link", pbBuf)
+				if cmd := s.redis.Publish(ctx, userID, pbBuf); cmd.Err() != nil {
+					log.Print(cmd.Err())
+				}
+				continue
 			}
 			if user.State.CurrentState() == statemachine.StateSearch {
 				title := message.Text
@@ -199,8 +222,24 @@ func (s *Server) Start() {
 			} else if user.State.CurrentState() == statemachine.StateVersionSelection {
 				go func() {
 					magnetLink := s.SelectFilmVersion(update.CallbackQuery, user)
+					message := pb.ServerToClientChannelMessage{
+						Action: &pb.ServerToClientChannelMessage_Start{
+							Start: &pb.ServerToClientChannelMessage_StartDownload{
+								Href: magnetLink}}}
+					pbBuf, err := proto.Marshal(&message)
+					if err != nil {
+						log.Print(err)
+						msg := tgbotapi.NewMessage(userID_, "Ошибка при попытке скачать фильм на устройство. Отмена поиска.")
+						if _, err := s.bot.Send(msg); err != nil {
+							log.Print(err)
+						}
+						user.State.Reset()
+						user.SearchResults = user.SearchResults[:0]
+						user.FilmResults = user.FilmResults[:0]
+						return
+					}
 					log.Printf("publish to %s: link", userID)
-					if cmd := s.redis.Publish(ctx, userID, magnetLink); cmd.Err() != nil {
+					if cmd := s.redis.Publish(ctx, userID, pbBuf); cmd.Err() != nil {
 						log.Print(cmd.Err())
 					}
 				}()
