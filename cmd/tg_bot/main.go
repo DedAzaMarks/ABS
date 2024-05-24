@@ -29,9 +29,9 @@ func main() {
 	ctx := context.Background()
 	db, _ := storage.GetRepo(ctx, storage.InMemory)
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr:     os.Getenv("REDIS_ADDR"),
+		Password: os.Getenv("REDIS_PASSWORD"), // no password set
+		DB:       0,                           // use default DB
 	})
 	if err := redisClient.Ping(ctx).Err(); err != nil {
 		log.Fatal(err)
