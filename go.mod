@@ -15,6 +15,7 @@ require (
 	golang.org/x/net v0.25.0
 	golang.org/x/text v0.15.0
 	google.golang.org/protobuf v1.33.0
+	pgregory.net/rand v1.0.2
 )
 
 require (

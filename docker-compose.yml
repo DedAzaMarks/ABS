@@ -1,23 +1,25 @@
 services:
   server:
-    build:
-      context: .
-      dockerfile: ./server.Dockerfile
-    environment:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_DB
+    image: tgbot
+    env_file:
+      - .env
+#    environment:
+#      - POSTGRES_USER
+#      - POSTGRES_PASSWORD
+#      - POSTGRES_DB
     ports:
       - "42069:42069"
     depends_on:
       - redis
-      - postgres
+#      - postgres
     networks:
       - msg-network
       - db-network
 
   redis:
     image: redis:7.2-alpine
+    command: >
+      --requirepass ${REDIS_PASSWORD}
     ports:
       - "6379:6379"
     env_file:
@@ -32,14 +34,14 @@ services:
       timeout: 3s
       retries: 5
 
-  postgres:
-    image: postgres:alpine
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+#  postgres:
+#    image: postgres:alpine
+#    ports:
+#      - "5432:5432"
+#    environment:
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_PASSWORD=postgres
 
 networks:
   msg-network:

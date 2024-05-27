@@ -33,7 +33,7 @@ const (
 	close_         = "close"
 	abort          = "abort"
 	help           = "help"
-	ID             = "ID"
+	ID             = "Ключ"
 	NewSearch      = "Новый поиск"
 	Cancel         = "Отмена"
 	CancelDownload = "Отмена текущей загрузки"
@@ -55,22 +55,19 @@ var mainKeyboard = tgbotapi.NewReplyKeyboard(
 
 type Server struct {
 	bot   *tgbotapi.BotAPI
-	repo  storage.Repo // repo ONLY stores user -> client[s], maybe state + epoch
 	redis *redis.Client
-	users map[string]*domain.TGUser // users handles all interaction
+	repo  storage.Storage
 }
 
-func NewServer(repo storage.Repo, bot *tgbotapi.BotAPI, redis *redis.Client) *Server {
+func NewServer(repo storage.Storage, bot *tgbotapi.BotAPI, redis *redis.Client) *Server {
 	return &Server{
 		repo:  repo,
-		bot:   bot,
 		redis: redis,
-		users: make(map[string]*domain.TGUser),
+		bot:   bot,
 	}
 }
 
 func (s *Server) Start() {
-
 	ctx := context.Background()
 	go s.registerNewClients(ctx)
 
@@ -82,36 +79,57 @@ func (s *Server) Start() {
 		log.Print("recv new message")
 		if update.Message != nil {
 			message := update.Message
-			userID_ := message.From.ID
-			userID := strconv.FormatInt(message.From.ID, 10)
+			userID := message.From.ID
 			if message.IsCommand() {
 				log.Print("it is command")
 				switch message.Command() {
 				case start:
 					log.Print("start from", message.From.ID)
-					if _, ok := s.users[userID]; ok {
-						log.Print("user already exists")
-					}
-					s.users[userID] = domain.NewTGUser(userID)
-					if err := s.repo.AddNewUser(ctx, userID); !errors.Is(err, myerrors.ErrorUserAlreadyExists) {
-						msg := tgbotapi.NewMessage(
-							message.Chat.ID,
-							fmt.Sprintf("Добавлен новый пользователь. Ваш ID: %s. Используйте его на устройстве, куда будут скачиваться фильмы.", userID))
-						if _, err := s.bot.Send(msg); err != nil {
+					userDTO, err := s.repo.LoadUser(ctx, userID)
+					if err != nil {
+						var msg tgbotapi.MessageConfig
+						if !errors.Is(err, myerrors.ErrorUserNotFound) {
 							log.Print(err)
+							msg = tgbotapi.NewMessage(
+								userID,
+								"Ошибка при попытке добавить нового пользователя.")
+							if _, err := s.bot.Send(msg); err != nil {
+								log.Print(err)
+							}
 						}
-					} else {
-						log.Print(err)
+					}
+					if userDTO != nil {
 						msg := tgbotapi.NewMessage(
 							message.Chat.ID,
-							fmt.Sprintf("Error on adding user %s.", userID))
+							fmt.Sprintf("Вы уже зарегистрированы. Ваш ключ: %q. Используйте его на устройстве, куда будут скачиваться фильмы.", userDTO.SessionKey))
 						if _, err := s.bot.Send(msg); err != nil {
 							log.Print(err)
 						}
 						continue
 					}
-					s.users[userID] = domain.NewTGUser(userID)
-					msg := tgbotapi.NewMessage(userID_, fmt.Sprintf(
+					user := domain.NewTGUser(userID)
+
+					if err := s.redis.Set(ctx, user.SessionKey, strconv.Itoa(int(user.UserID)), 0).Err(); err != nil {
+						log.Printf("failed to save session to redis: %s", err)
+						continue
+					}
+					if err := s.repo.SaveUser(ctx, userID, user); err != nil {
+						log.Print(err)
+						var msg tgbotapi.MessageConfig
+						msg = tgbotapi.NewMessage(
+							userID,
+							"Ошибка при попытке добавить нового пользователя.")
+						if _, err := s.bot.Send(msg); err != nil {
+							log.Print(err)
+						}
+					}
+					msg := tgbotapi.NewMessage(
+						message.Chat.ID,
+						fmt.Sprintf("Добавлен новый пользователь. Ваш Ключ: %q. Используйте его на устройстве, куда будут скачиваться фильмы.", user.SessionKey))
+					if _, err := s.bot.Send(msg); err != nil {
+						log.Print(err)
+					}
+					msg = tgbotapi.NewMessage(userID, fmt.Sprintf(
 						`Для начала поиска нажмите на кнопку %q
 Для того, чтобы узнать свой ID  нажмите на кнопку %q. Используйте его на устройстве, куда будут скачиваться фильмы.
 Для отмены поиска/выбора фильма нажмите кнопку %q
@@ -123,36 +141,44 @@ func (s *Server) Start() {
 				}
 				continue
 			}
-			user, ok := s.users[userID]
-			if !ok {
-				log.Print("user not found")
-				msg := tgbotapi.NewMessage(userID_, "Незарегистрированный пользователь. Для регистрации воспользуйтесь командой /start")
-				if _, err := s.bot.Send(msg); err != nil {
-					log.Print(err)
+			user, err := s.repo.LoadUser(ctx, userID)
+			if err != nil {
+				if errors.Is(err, myerrors.ErrorUserNotFound) {
+					msg := tgbotapi.NewMessage(userID, "Незарегистрированный пользователь. Для регистрации воспользуйтесь командой /start")
+					if _, err := s.bot.Send(msg); err != nil {
+						log.Print(err)
+					}
+					continue
 				}
+				log.Print(err)
 				continue
 			}
 			switch message.Text {
 			case ID:
-				msg := tgbotapi.NewMessage(userID_, fmt.Sprintf("Ваш ID: %s. Используйте его на устройстве, куда будут скачиваться фильмы.", userID))
+				msg := tgbotapi.NewMessage(userID, fmt.Sprintf("Ваш Ключ: %q. Используйте его на устройстве, куда будут скачиваться фильмы.", user.SessionKey))
 				msg.ReplyToMessageID = message.MessageID
 				if _, err := s.bot.Send(msg); err != nil {
 					log.Print(err)
 				}
 				continue
 			case NewSearch:
-				log.Print("search: " + userID)
 				if err := user.State.TriggerEvent(statemachine.EventNewSearch); err != nil {
 					log.Printf("user %s error: %s", userID, err)
 					user.State.Reset()
 					user.SearchResults = user.SearchResults[:0]
 					user.FilmResults = user.FilmResults[:0]
-					msg := tgbotapi.NewMessage(userID_, "Простите, что-то пошло не так, пожалуйста начните новый поиск.")
+					if err := s.repo.SaveUser(ctx, userID, user); err != nil {
+						log.Print(err)
+					}
+					msg := tgbotapi.NewMessage(userID, "Простите, что-то пошло не так, пожалуйста начните новый поиск.")
 					if _, err := s.bot.Send(msg); err != nil {
 						log.Print(err)
 					}
 				}
-				msg := tgbotapi.NewMessage(userID_, "Введите название фильма.")
+				if err := s.repo.SaveUser(context.Background(), userID, user); err != nil {
+					log.Print(err)
+				}
+				msg := tgbotapi.NewMessage(userID, "Введите название фильма.")
 				if _, err := s.bot.Send(msg); err != nil {
 					log.Print(err)
 				}
@@ -161,29 +187,25 @@ func (s *Server) Start() {
 				user.State.Reset()
 				user.SearchResults = user.SearchResults[:0]
 				user.FilmResults = user.FilmResults[:0]
-				msg := tgbotapi.NewMessage(userID_, fmt.Sprintf("Для начала поиска нажмите на кнопку %q", NewSearch))
+				if err := s.repo.SaveUser(ctx, userID, user); err != nil {
+					log.Print(err)
+				}
+				msg := tgbotapi.NewMessage(userID, fmt.Sprintf("Для начала поиска нажмите на кнопку %q", NewSearch))
 				if _, err := s.bot.Send(msg); err != nil {
 					log.Print(err)
 				}
 				continue
 			case CancelDownload:
-				msg := tgbotapi.NewMessage(userID_, "Если на ваше устройство идет скачивание, оно будет прервано")
+				msg := tgbotapi.NewMessage(userID, "Если на ваше устройство идет скачивание, оно будет прервано")
 				if _, err := s.bot.Send(msg); err != nil {
 					log.Print(err)
 				}
 				cancelDownloadMessage := pb.ServerToClientChannelMessage{
 					Action: &pb.ServerToClientChannelMessage_Stop{
 						Stop: &pb.ServerToClientChannelMessage_StopDownload{DownloadID: ""}}}
-				pbBuf, err := proto.Marshal(&cancelDownloadMessage)
-				if err != nil {
-					msg := tgbotapi.NewMessage(userID_, "Ошибка при попытке скачать фильм на устройство. Отмена поиска.")
-					if _, err := s.bot.Send(msg); err != nil {
-						log.Print(err)
-					}
-					continue
-				}
-				log.Printf("publish to %s: link", pbBuf)
-				if cmd := s.redis.Publish(ctx, userID, pbBuf); cmd.Err() != nil {
+				pbBuf, _ := proto.Marshal(&cancelDownloadMessage)
+				log.Printf("publish to %s: link", user.SessionKey)
+				if cmd := s.redis.Publish(ctx, user.SessionKey, pbBuf); cmd.Err() != nil {
 					log.Print(cmd.Err())
 				}
 				continue
@@ -193,7 +215,7 @@ func (s *Server) Start() {
 				go s.SearchFilm(message, user, title)
 				continue
 			}
-			msg := tgbotapi.NewMessage(userID_, "Сейчас не ожидается никакой ввод.")
+			msg := tgbotapi.NewMessage(userID, "Сейчас не ожидается никакой ввод.")
 			msg.ReplyToMessageID = message.MessageID
 			if _, err := s.bot.Send(msg); err != nil {
 				log.Print(err)
@@ -207,39 +229,43 @@ func (s *Server) Start() {
 			if _, err := s.bot.Request(callback); err != nil {
 				log.Print(err)
 			}
-			user, ok := s.users[userID]
-			if !ok {
-				log.Print("user not found")
-				msg := tgbotapi.NewMessage(userID_, "Незарегистрированный пользователь. Для регистрации воспользуйтесь командой /start")
-				if _, err := s.bot.Send(msg); err != nil {
-					log.Print(err)
+			user, err := s.repo.LoadUser(ctx, userID_)
+			if err != nil {
+				if errors.Is(err, myerrors.ErrorUserNotFound) {
+					log.Print("user not found")
+					msg := tgbotapi.NewMessage(userID_, "Незарегистрированный пользователь. Для регистрации воспользуйтесь командой /start")
+					if _, err := s.bot.Send(msg); err != nil {
+						log.Print(err)
+					}
+					continue
 				}
+				log.Print(err)
 				continue
 			}
 			if user.State.CurrentState() == statemachine.StateFilmSelection {
 				go s.GetFilmLinks(update.CallbackQuery, user)
 				continue
 			} else if user.State.CurrentState() == statemachine.StateVersionSelection {
+				if len(user.Devices) == 0 {
+					msg := tgbotapi.NewMessage(userID_, fmt.Sprintf("У вас не привязано устройство. Пожалуйста воспользуйтесь %q для привязки устройства, на которое будет загружен фильм.", user.SessionKey))
+					if _, err := s.bot.Send(msg); err != nil {
+						log.Print(err)
+					}
+					continue
+				}
 				go func() {
-					magnetLink := s.SelectFilmVersion(update.CallbackQuery, user)
+					magnetLink, ok := s.SelectFilmVersion(update.CallbackQuery, user)
+					if !ok {
+						log.Printf("user %s is not a film link", user.SessionKey)
+						return
+					}
 					message := pb.ServerToClientChannelMessage{
 						Action: &pb.ServerToClientChannelMessage_Start{
 							Start: &pb.ServerToClientChannelMessage_StartDownload{
 								Href: magnetLink}}}
-					pbBuf, err := proto.Marshal(&message)
-					if err != nil {
-						log.Print(err)
-						msg := tgbotapi.NewMessage(userID_, "Ошибка при попытке скачать фильм на устройство. Отмена поиска.")
-						if _, err := s.bot.Send(msg); err != nil {
-							log.Print(err)
-						}
-						user.State.Reset()
-						user.SearchResults = user.SearchResults[:0]
-						user.FilmResults = user.FilmResults[:0]
-						return
-					}
+					pbBuf, _ := proto.Marshal(&message)
 					log.Printf("publish to %s: link", userID)
-					if cmd := s.redis.Publish(ctx, userID, pbBuf); cmd.Err() != nil {
+					if cmd := s.redis.Publish(ctx, user.SessionKey, pbBuf); cmd.Err() != nil {
 						log.Print(cmd.Err())
 					}
 				}()
@@ -273,16 +299,35 @@ func (s *Server) registerNewClients(ctx context.Context) {
 			continue
 		}
 		log.Print("register message unmarshalled")
-		s.users[registerReq.UserID].Client, _ = uuid.Parse(registerReq.ClientID)
-		if err := s.repo.AddNewClient(ctx, registerReq.UserID, registerReq.ClientID); err != nil {
+		userID_, err := s.redis.Get(ctx, registerReq.GetSessionKey()).Result()
+		if err != nil {
 			log.Print(err)
 			continue
+		}
+		userID, _ := strconv.ParseInt(userID_, 10, 64)
+		clientID := uuid.MustParse(registerReq.DeviceID)
+		if err := s.repo.AddNewDevice(ctx, userID, clientID, registerReq.DeviceName); err != nil {
+			if errors.Is(err, myerrors.ErrorUserNotFound) {
+				msg := tgbotapi.NewMessage(userID, "Незарегистрированный пользователь. Для регистрации воспользуйтесь командой /start")
+				if _, err := s.bot.Send(msg); err != nil {
+					log.Print(err)
+				}
+				continue
+			}
+			if _, err := s.bot.Send(tgbotapi.NewMessage(userID, "Не получилось добавить устройство")); err != nil {
+				log.Print(err)
+			}
+			log.Print(err)
+			continue
+		}
+		if _, err := s.bot.Send(tgbotapi.NewMessage(userID, fmt.Sprintf("Добавлено новое устройство %s", registerReq.DeviceName))); err != nil {
+			log.Print(err)
 		}
 		log.Print("new client registered")
 	}
 }
 
-func (s *Server) SearchFilm(message *tgbotapi.Message, user *domain.TGUser, title string) {
+func (s *Server) SearchFilm(message *tgbotapi.Message, user *domain.User, title string) {
 	userID := message.From.ID
 	user.SearchResults = user.SearchResults[:0]
 	win, err := utils.UTF2WIN(title)
@@ -325,27 +370,30 @@ func (s *Server) SearchFilm(message *tgbotapi.Message, user *domain.TGUser, titl
 	if _, err := s.bot.Send(msg); err != nil {
 		log.Print(err)
 	}
+	if err := s.repo.SaveUser(context.Background(), userID, user); err != nil {
+		log.Print(err)
+	}
 	if err := user.State.TriggerEvent(statemachine.EventSelectFilm); err != nil {
 		log.Printf("user %d error: %s", userID, err)
 		user.State.Reset()
 		user.SearchResults = user.SearchResults[:0]
 		user.FilmResults = user.FilmResults[:0]
+		if err := s.repo.SaveUser(context.Background(), userID, user); err != nil {
+			log.Print(err)
+		}
 		msg := tgbotapi.NewMessage(userID, "Простите, что-то пошло не так, пожалуйста начните новый поиск.")
 		if _, err := s.bot.Send(msg); err != nil {
 			log.Print(err)
 		}
 	}
+	if err := s.repo.SaveUser(context.Background(), userID, user); err != nil {
+		log.Print(err)
+	}
 }
 
-func (s *Server) GetFilmLinks(callbackQuery *tgbotapi.CallbackQuery, user *domain.TGUser) {
+func (s *Server) GetFilmLinks(callbackQuery *tgbotapi.CallbackQuery, user *domain.User) {
 	userID := callbackQuery.From.ID
-	searchResultID, err := uuid.Parse(callbackQuery.Data)
-	if err != nil {
-		log.Print(err)
-		if _, err := s.bot.Send(tgbotapi.NewMessage(userID, "Такого фильма не найдено.")); err != nil {
-			log.Print(err)
-		}
-	}
+	searchResultID := uuid.MustParse(callbackQuery.Data)
 	indx := slices.IndexFunc(user.SearchResults, func(sr domain.SignedSearchResult) bool {
 		return sr.ID == searchResultID
 	})
@@ -424,28 +472,30 @@ func (s *Server) GetFilmLinks(callbackQuery *tgbotapi.CallbackQuery, user *domai
 	if _, err := s.bot.Send(msg); err != nil {
 		log.Print(err)
 	}
+	if err := s.repo.SaveUser(context.Background(), userID, user); err != nil {
+		log.Print(err)
+	}
 	if err := user.State.TriggerEvent(statemachine.EventSelectVersion); err != nil {
 		log.Printf("user %d error: %s", userID, err)
 		user.State.Reset()
 		user.SearchResults = user.SearchResults[:0]
 		user.FilmResults = user.FilmResults[:0]
+		if err := s.repo.SaveUser(context.Background(), userID, user); err != nil {
+			log.Print(err)
+		}
 		msg := tgbotapi.NewMessage(userID, "Простите, что-то пошло не так, пожалуйста начните новый поиск.")
 		if _, err := s.bot.Send(msg); err != nil {
 			log.Print(err)
 		}
 	}
+	if err := s.repo.SaveUser(context.Background(), userID, user); err != nil {
+		log.Print(err)
+	}
 }
 
-func (s *Server) SelectFilmVersion(query *tgbotapi.CallbackQuery, user *domain.TGUser) (magnetLink string) {
+func (s *Server) SelectFilmVersion(query *tgbotapi.CallbackQuery, user *domain.User) (string, bool) {
 	userID := query.From.ID
-	versionID, err := uuid.Parse(query.Data)
-	if err != nil {
-		log.Print(err)
-		if _, err := s.bot.Send(tgbotapi.NewMessage(userID, "Такой версии фильма не найдено.")); err != nil {
-			log.Print(err)
-		}
-		return
-	}
+	versionID := uuid.MustParse(query.Data)
 	indx := slices.IndexFunc(user.FilmResults, func(result domain.SignedFilmResult) bool {
 		return result.ID == versionID
 	})
@@ -457,7 +507,7 @@ func (s *Server) SelectFilmVersion(query *tgbotapi.CallbackQuery, user *domain.T
 		))); err != nil {
 			log.Print(err)
 		}
-		return
+		return "", false
 	}
 	filmResult := user.FilmResults[indx].FilmResult
 	if err := user.State.TriggerEvent(statemachine.EventFinish); err != nil {
@@ -470,6 +520,9 @@ func (s *Server) SelectFilmVersion(query *tgbotapi.CallbackQuery, user *domain.T
 			log.Print(err)
 		}
 	}
+	if err := s.repo.SaveUser(context.Background(), userID, user); err != nil {
+		log.Print(err)
+	}
 	if _, err := s.bot.Send(tgbotapi.NewMessage(userID, fmt.Sprintf("Фильм с выбранными характеристиками (%s %s %s %s %s) будет скачан на устройство, которое вы привязали. Чтобы скачать новый фильм или выбрать другую версию нажмите на кнопку %q",
 		filmResult.Quality,
 		filmResult.TranslationVoiceover,
@@ -480,6 +533,5 @@ func (s *Server) SelectFilmVersion(query *tgbotapi.CallbackQuery, user *domain.T
 	))); err != nil {
 		log.Print(err)
 	}
-	magnetLink = filmResult.Magnet
-	return
+	return filmResult.Magnet, true
 }

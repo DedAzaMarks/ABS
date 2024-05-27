@@ -4,9 +4,44 @@ package proto;
 
 option go_package = "internal/proto";
 
+message tgUser {
+  message SignedSearchResult {
+    message SearchResult {
+      string title = 1;
+      string href = 2;
+    }
+    string id = 1;
+    SearchResult searchResult = 2;
+  }
+  message SignedFilmResult {
+    message FilmResult {
+      string quality = 1;
+      string translationVoiceover = 2;
+      string author = 3;
+      string fileFormat = 4;
+      string size = 5;
+      string magnet = 6;
+    }
+    string id = 1;
+    FilmResult filmResult = 2;
+  }
+  message Device {
+    string id = 1;
+    string name = 2;
+  }
+
+  int64 userID = 1;
+  string sessionKey = 2;
+  repeated Device devices = 3;
+  string state = 4;
+  repeated SignedSearchResult searchResult = 5;
+  repeated SignedFilmResult filmResult = 6;
+}
+
 message RegisterNewClient {
-  string userID = 1;
-  string clientID = 2;
+  string sessionKey = 1;
+  string deviceID = 2;
+  string deviceName = 3;
 }
 
 message ClientToServerChannelMessage {

@@ -19,4 +19,4 @@ FROM scratch as server
 COPY --from=certificates /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build ["/bin/server", "/bin/"]
 COPY [".env", "/"]
-CMD ["/bin/server"]
+ENTRYPOINT ["/bin/server"]

@@ -25,8 +25,37 @@ const (
 	EventNewSearch     Event = "new"
 	EventSelectFilm    Event = "select_film"
 	EventSelectVersion Event = "select_version"
+	EventSelectDevice  Event = "select_device"
 	EventFinish        Event = "finish"
 )
+
+var transitions = map[State]map[Event]State{
+	StateInit: {
+		EventNewSearch: StateSearch,
+		EventCancel:    StateInit,
+	},
+	StateSearch: {
+		EventNewSearch:  StateSearch,
+		EventSelectFilm: StateFilmSelection,
+		EventCancel:     StateInit,
+	},
+	StateFilmSelection: {
+		EventNewSearch:     StateSearch,
+		EventSelectVersion: StateVersionSelection,
+		EventCancel:        StateInit,
+	},
+	StateVersionSelection: {
+		EventNewSearch:    StateSearch,
+		EventSelectDevice: StateDeviceSelection,
+		EventFinish:       StateInit,
+		EventCancel:       StateInit,
+	},
+	StateDeviceSelection: {
+		EventNewSearch: StateSearch,
+		EventFinish:    StateInit,
+		EventCancel:    StateInit,
+	},
+}
 
 // StateMachine represents the finite statemachine machine
 type StateMachine struct {
@@ -38,28 +67,7 @@ type StateMachine struct {
 func NewStateMachine() *StateMachine {
 	return &StateMachine{
 		currentState: StateInit,
-		transitions: map[State]map[Event]State{
-			StateInit: {
-				EventNewSearch: StateSearch,
-				EventCancel:    StateInit,
-			},
-			StateSearch: {
-				EventNewSearch:  StateSearch,
-				EventSelectFilm: StateFilmSelection,
-				EventCancel:     StateInit,
-			},
-			StateFilmSelection: {
-				EventNewSearch:     StateSearch,
-				EventSelectVersion: StateVersionSelection,
-				EventCancel:        StateInit,
-			},
-			StateVersionSelection: {
-				EventNewSearch: StateSearch,
-				EventFinish:    StateInit,
-				EventCancel:    StateInit,
-			},
-			StateDeviceSelection: {},
-		},
+		transitions:  transitions,
 	}
 }
 
@@ -81,4 +89,12 @@ func (sm *StateMachine) CurrentState() State {
 // Reset sets StateMachine to StateInit
 func (sm *StateMachine) Reset() {
 	sm.currentState = StateInit
+}
+
+// SetState should be used ONLY for setting state after deserialization
+func SetState(state State) *StateMachine {
+	return &StateMachine{
+		currentState: state,
+		transitions:  transitions,
+	}
 }

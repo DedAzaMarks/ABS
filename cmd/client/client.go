@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	_ "embed"
-	"flag"
 	"fmt"
 	pb "github.com/DedAzaMarks/ABS/internal/proto"
 	"github.com/gen2brain/beeep"
@@ -28,34 +29,48 @@ var downloadFinishedScrpitSrc []byte
 func main() {
 	log.SetPrefix("client: ")
 	log.SetFlags(log.Lshortfile)
-
-	log.Println(downloadFinishedScrpitSrc)
 	pid := os.Getpid()
 	log.Println("my pid:", pid)
-	if err := os.WriteFile("/tmp/download_finished.sh", strconv.AppendInt(downloadFinishedScrpitSrc, int64(pid), 10), 0777); err != nil {
-		log.Fatal("failed to remember pid")
+	f, err := os.CreateTemp("", "*_download_finished.sh")
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "error on creating tmp script: %v", err)
+		os.Exit(1)
 	}
-
-	redisAddr := flag.String("redis", "localhost:6379", "Redis address")
-	flag.Parse()
-
-	userID, ok := inputbox.InputBox("Remote Download", "Type user ID", "")
-	if !ok {
-		log.Fatal("host:port was not set")
+	defer func(name string) { _ = os.Remove(name) }(f.Name())
+	if err := os.WriteFile(f.Name(), strconv.AppendInt(downloadFinishedScrpitSrc, int64(pid), 10), 0777); err != nil {
+		log.Fatal("failed to remember pid")
 	}
 
 	ctx := context.Background()
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     *redisAddr,
-		Password: "", // no password set
-		DB:       0,  // use default DB
+	rootCertPool := x509.NewCertPool()
+	redisCert, err := os.ReadFile("/Users/m.bordyugov/.redis/YandexInternalRootCA.crt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if !rootCertPool.AppendCertsFromPEM(redisCert) {
+		log.Fatal("failed to append redis cert")
+	}
+	redisClient := redis.NewUniversalClient(&redis.UniversalOptions{
+		TLSConfig: &tls.Config{
+			RootCAs:            rootCertPool,
+			InsecureSkipVerify: true,
+		},
+		Addrs:    []string{"c-c9q2pkmkffgciep0re8p.rw.mdb.yandexcloud.net:6380"},
+		Password: "redisredis", // no password set
+		DB:       0,            // use default DB
 	})
-
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Fatal(err)
+	}
 	defer redisClient.Close()
+
+	sessionKey, _ := inputbox.InputBox("Remote Download", "Введите Ключ", "")
+	devidceName, _ := inputbox.InputBox("Remote Download", "Назовите устройство", "")
 	registerReq := pb.RegisterNewClient{
-		UserID:   userID,
-		ClientID: ClientID.String(),
+		SessionKey: sessionKey,
+		DeviceID:   ClientID.String(),
+		DeviceName: devidceName,
 	}
 	buf, err := proto.Marshal(&registerReq)
 	if err != nil {
@@ -65,24 +80,8 @@ func main() {
 		log.Fatal(cmd.Err())
 	}
 	log.Print("register message sent")
-	pubSub := redisClient.Subscribe(ctx, userID)
+	pubSub := redisClient.Subscribe(ctx, sessionKey)
 	defer pubSub.Close()
-	go func() {
-		pingSub := redisClient.Subscribe(ctx, "ping:"+userID)
-		for {
-			log.Print("listening for ping")
-			ping, err := pingSub.ReceiveMessage(ctx)
-			log.Print("ping received")
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			log.Print(ping.Payload)
-			if err := beeep.Alert("Remote Download Client", ping.Payload, ""); err != nil {
-				log.Fatal(err)
-			}
-		}
-	}()
 	var ctxDownload context.Context
 	var cancelDownload context.CancelFunc
 	for {
@@ -109,8 +108,8 @@ func handleMessage(ctx *context.Context, cancel *context.CancelFunc, msg string)
 	}
 	switch action := message.Action.(type) {
 	case *pb.ServerToClientChannelMessage_Start:
-		if err := beeep.Alert("Remote Download Client", "Новая загрузка", ""); err != nil {
-			_ = beeep.Alert("Remote Download Client", "Alert error", "")
+		if err := beeep.Alert("Remote Download Devices", "Новая загрузка", ""); err != nil {
+			_ = beeep.Alert("Remote Download Devices", "Alert error", "")
 			log.Print(err)
 		}
 		*ctx, *cancel = context.WithCancel(context.Background())
@@ -121,15 +120,15 @@ func handleMessage(ctx *context.Context, cancel *context.CancelFunc, msg string)
 	case *pb.ServerToClientChannelMessage_Stop:
 		if *ctx == nil && *cancel == nil {
 			log.Print("Ничего не загружается")
-			if err := beeep.Alert("Remote Download Client", "Ничего не загружается", ""); err != nil {
-				_ = beeep.Alert("Remote Download Client", "Alert error", "")
+			if err := beeep.Alert("Remote Download Devices", "Ничего не загружается", ""); err != nil {
+				_ = beeep.Alert("Remote Download Devices", "Alert error", "")
 				log.Print(err)
 			}
 			return
 		}
 		log.Print("stopping torrent")
-		if err := beeep.Alert("Remote Download Client", "Отмена загрузки", ""); err != nil {
-			_ = beeep.Alert("Remote Download Client", "Alert error", "")
+		if err := beeep.Alert("Remote Download Devices", "Отмена загрузки", ""); err != nil {
+			_ = beeep.Alert("Remote Download Devices", "Alert error", "")
 			log.Print(err)
 		}
 		(*cancel)()
